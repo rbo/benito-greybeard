@@ -1,0 +1,9 @@
+---
+- name: Start hcloud_instance
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - hetzner.hcloud.server:
+        name: benito-greybeard
+        state: absent
+      delegate_to: localhost

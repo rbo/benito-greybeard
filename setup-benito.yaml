@@ -1,0 +1,96 @@
+---
+- name: Start hcloud_instance
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - hetzner.hcloud.server:
+        name: benito-greybeard
+        server_type: cpx32
+        image: fedora-42
+        location: fsn1
+        state: present
+        ssh_keys:
+        - rbohne@redhat.com
+        - ed25519
+      register: output
+      delegate_to: localhost
+
+    - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+      ansible.builtin.wait_for:
+        port: 22
+        host: '{{ output.hcloud_server.ipv4_address }}'
+        search_regex: OpenSSH
+        delay: 10
+        timeout: 300
+      delegate_to: localhost
+
+    - name: Create temp. inventory
+      delegate_to: localhost
+      ansible.builtin.add_host:
+        hostname: benito-greybeard
+        ansible_user: root
+        ansible_host: '{{ output.hcloud_server.ipv4_address }}'
+        ansible_ssh_private_key_file: '~/.ssh/id_ed25519'
+
+- name: Basis installation
+  hosts: benito-greybeard
+  gather_facts: yes
+  tasks:
+    - name: Ping
+      ansible.builtin.ping:
+
+    - name: Update all packages
+      ansible.builtin.package:
+        name: "*"
+        state: latest
+
+    - name: Create directory
+      ansible.builtin.file:
+        path: /tmp/microshift-rpms
+        state: directory
+
+    - name: Download tar archive
+      ansible.builtin.unarchive:
+        src: https://github.com/microshift-io/microshift/releases/download/release-4.20-4.20.0-okd-scos.9/microshift-rpms-x86_64.tgz
+        dest: /tmp/microshift-rpms/
+        remote_src: yes
+
+    - name: Download repo helper script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/microshift-io/microshift/refs/tags/release-4.20-4.20.0-okd-scos.9/src/rpm/create_repos.sh
+        dest: /tmp/create_repos.sh
+        mode: '0755'
+        # remote_src: yes
+
+    - name: Run repo helper script
+      ansible.builtin.shell:
+        cmd: /tmp/create_repos.sh -create /tmp/microshift-rpms 4.20
+
+    - name: Install packages
+      ansible.builtin.package:
+        name:
+        - git
+        - podman
+        - tmux
+        - microshift
+        - microshift-kindnet
+        - microshift-olm
+        state: present
+
+    - name: Create microshift config
+      ansible.builtin.copy:
+        content: |
+          dns:
+            baseDomain: benito-greybeard.bohne.io
+
+        dest: /etc/microshift/config.yaml
+
+    - name: Enable and start microshift
+      ansible.builtin.systemd:
+        name: microshift
+        enabled: yes
+        state: started
+        # timeout: 300
+
+
+  # export  KUBECONFIG=/var/lib/microshift/resources/kubeadmin/kubeconfig

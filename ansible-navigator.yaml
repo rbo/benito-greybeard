@@ -1,0 +1,37 @@
+---
+ansible-navigator:
+  execution-environment:
+    environment-variables:
+      pass:
+        - HCLOUD_TOKEN
+    #     - K8S_AUTH_KUBECONFIG
+    #     - IPA_HOST
+    #     - IPA_PASS
+    #     - IPA_USER
+    #     - SSH_PRIVATE_KEY
+    #     - SSH_PUBLIC_KEY
+    #     - TOWER_USERNAME
+    #     - TOWER_HOST
+    #     - TOWER_PASSWORD
+    #     - TOWER_VERIFY_SSL
+    #     - KUBECONFIG
+    #     - RHCA_USER
+    #     - RHCA_PASS
+    #     - RH_VAULT_CA_CERT_FILENAME
+    #     - RH_VAULT_URL
+    #     - RH_VAULT_ROLE_ID
+    #     - RH_VAULT_SECRET_ID
+    #     - CONTROLLER_HOST
+    #     - CONTROLLER_PASSWORD
+    #     - CONTROLLER_USERNAME
+    #     - CONTROLLER_VERIFY_SSL
+    image: quay.io/rbohne/benito-greybeard-ee:202511232110
+    # pull:
+    #   arguments:
+    #     - "--tls-verify=false"
+  logging:
+    level: debug
+  mode: stdout
+  playbook-artifact:
+    enable: true
+    save-as: /tmp/stormshift-automation-{playbook_name}-artifact-{time_stamp}.json

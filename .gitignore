@@ -1,0 +1,4 @@
+context/
+development.env
+.ansible/
+ansible-navigator.log
