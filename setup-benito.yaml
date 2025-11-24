@@ -15,6 +15,19 @@
       register: output
       delegate_to: localhost
 
+    - name: Create DNS Records
+      community.general.cloudflare_dns:
+        account_email: "{{ lookup('ansible.builtin.env', 'CLOUDFLARE_ACCOUNT_EMAIL') }}"
+        account_api_key: "{{ lookup('ansible.builtin.env', 'CLOUDFLARE_ACOOUNT_TOKEN') }}"
+        zone: openshift.pub
+        record: "{{ item }}"
+        type: A
+        value: "{{ output.hcloud_server.ipv4_address }}"
+        comment: Benito Greybeard's VM
+      with_items:
+        - 'bg'
+        - '*.apps.bg'
+
     - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
       ansible.builtin.wait_for:
         port: 22
@@ -75,13 +88,14 @@
         - microshift
         - microshift-kindnet
         - microshift-olm
+        - k9s
         state: present
 
     - name: Create microshift config
       ansible.builtin.copy:
         content: |
           dns:
-            baseDomain: benito-greybeard.bohne.io
+            baseDomain: bg.openshift.pub
 
         dest: /etc/microshift/config.yaml
 

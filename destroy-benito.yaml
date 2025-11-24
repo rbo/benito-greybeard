@@ -6,4 +6,17 @@
     - hetzner.hcloud.server:
         name: benito-greybeard
         state: absent
-      delegate_to: localhost
+
+    - name: Delete DNS records
+      community.general.cloudflare_dns:
+        account_email: "{{ lookup('ansible.builtin.env', 'CLOUDFLARE_ACCOUNT_EMAIL') }}"
+        account_api_key: "{{ lookup('ansible.builtin.env', 'CLOUDFLARE_ACOOUNT_TOKEN') }}"
+        zone: openshift.pub
+        record: "{{ item }}"
+        state: absent
+        type: A
+        comment: Benito Greybeard's VM
+      with_items:
+        - 'bg'
+        - '*.apps.bg'
+

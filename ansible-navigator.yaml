@@ -4,6 +4,8 @@ ansible-navigator:
     environment-variables:
       pass:
         - HCLOUD_TOKEN
+        - CLOUDFLARE_ACCOUNT_EMAIL
+        - CLOUDFLARE_ACOOUNT_TOKEN
     #     - K8S_AUTH_KUBECONFIG
     #     - IPA_HOST
     #     - IPA_PASS
