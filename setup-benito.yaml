@@ -106,5 +106,46 @@
         state: started
         # timeout: 300
 
+    - name: Add $KUBECONFIG to ~/.bashrc
+      ansible.builtin.lineinfile:
+        path: ~/.bashrc
+        line: 'export KUBECONFIG=/var/lib/microshift/resources/kubeadmin/kubeconfig'
+
+    - name: Copy kubeconfig to local machine
+      ansible.builtin.fetch:
+        src: /var/lib/microshift/resources/kubeadmin/kubeconfig
+        dest: kubeconfig
+        flat: yes
+
+    - name: Read kubeconfig
+      delegate_to: localhost
+      include_vars:
+        file: "kubeconfig"
+        name: kubeconfig
+
+    - name: Rebuild new kubeconfig
+      set_fact:
+        kubeconfig: "{{ kubeconfig | combine(fields_to_change, recursive=true) }}"
+      vars:
+        fields_to_change:
+          clusters:
+            - name: "benito-greybeard"
+              cluster:
+                server: "https://bg.openshift.pub:6443"
+                insecure-skip-tls-verify: true
+          contexts:
+            - name: "benito-greybeard"
+              context: 
+                cluster: "benito-greybeard"
+                namespace: "default"
+                user: "user"
+          current-context: "benito-greybeard"
+
+    - name: "Write kubeconfig"
+      delegate_to: localhost
+      copy:
+        content: "{{ kubeconfig | to_nice_yaml }}"
+        dest: "kubeconfig-clean"
+
 
   # export  KUBECONFIG=/var/lib/microshift/resources/kubeadmin/kubeconfig
